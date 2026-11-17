@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NC County Youth Justice</title>
+<style>
+  :root { --bg: #f6f7f9; --card: #fff; --text: #1f2328; --muted: #656d76; --line: #d8dee4;
+          --county: #0969da; --state: #8c959f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --card: #161b22; --text: #e6edf3; --muted: #8d96a0; --line: #30363d;
+            --county: #4493f8; --state: #8d96a0; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  .muted { color: var(--muted); }
+  select { font-size: 1rem; padding: 6px 8px; margin: 16px 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .card, .box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .card b { display: block; font-size: 1.8rem; margin: 4px 0; }
+  .box { margin-top: 16px; }
+  .chart { position: relative; height: 280px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<main>
+  <h1>NC County Youth Justice, 2020&ndash;2025</h1>
+  <p class="muted">Pick a county to compare it with North Carolina as a whole. Rates are per 1,000 young people aged 10&ndash;17.</p>
+
+  <label for="county">County:</label>
+  <select id="county"></select>
+  <span class="muted" id="area"></span>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="box">
+    <h2>Delinquent complaint rate</h2>
+    <div class="chart"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="box">
+    <h2>Year by year</h2>
+    <div class="table-wrap"><table id="table"></table></div>
+  </div>
+
+  <p class="muted">Source: NC Department of Public Safety, Juvenile Justice County Databooks 2020&ndash;2025.</p>
+</main>
+
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const counties = DATA.counties;   // one object per county per year (from the view county_stats_with_rates)
+  const state = DATA.state;         // one object per year (from the view state_totals)
+  const years = state.map(s => s.year);
+  const latest = state[state.length - 1];
+  let chart;
+
+  // Fill the dropdown with the 100 county names.
+  const select = document.getElementById("county");
+  const names = [...new Set(counties.map(c => c.county_name))];
+  for (const name of names) select.add(new Option(name, name));
+  select.value = "Wake";
+
+  function show(name) {
+    const rows = counties.filter(c => c.county_name === name);   // this county's 6 years
+    const now = rows[rows.length - 1];                           // the latest year
+    document.getElementById("area").textContent = now.area + " area";
+
+    // Cards: latest year, county vs state.
+    const cards = [
+      ["Delinquent complaint rate", now.complaint_rate, latest.complaint_rate],
+      ["Detention admission rate", now.detention_rate, latest.detention_rate],
+      ["YDC commitment rate", now.ydc_rate, latest.ydc_rate],
+    ];
+    document.getElementById("cards").innerHTML = cards.map(([label, county, nc]) =>
+      `<div class="card">${label}, ${now.year}<b>${county}</b><span class="muted">North Carolina: ${nc}</span></div>`
+    ).join("");
+
+    // Chart: county line vs state line.
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: [
+          { label: name, data: rows.map(r => r.complaint_rate), borderColor: getCss("--county"), backgroundColor: getCss("--county") },
+          { label: "North Carolina", data: state.map(s => s.complaint_rate), borderColor: getCss("--state"), backgroundColor: getCss("--state"), borderDash: [5, 5] },
+        ],
+      },
+      options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } },
+    });
+
+    // Table: one row per year.
+    let html = "<tr><th>Year</th><th>Young people 10-17</th><th>Delinquent complaints</th>" +
+               "<th>Detention admissions</th><th>YDC commitments</th><th>Complaint rate</th></tr>";
+    for (const r of rows) {
+      html += `<tr><td>${r.year}</td><td>${r.population_10_17.toLocaleString()}</td>` +
+              `<td>${r.complaints_delinquent_total.toLocaleString()}</td><td>${r.detention_admissions}</td>` +
+              `<td>${r.ydc_commitments}</td><td>${r.complaint_rate}</td></tr>`;
+    }
+    document.getElementById("table").innerHTML = html;
+  }
+
+  function getCss(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  Chart.defaults.color = getCss("--muted");          // axis and legend text follows light/dark mode
+  Chart.defaults.borderColor = getCss("--line");
+
+  select.addEventListener("change", () => show(select.value));
+  show(select.value);
+</script>
+</body>
+</html>
