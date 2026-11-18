@@ -25,7 +25,8 @@ SELECT
     s.jcpc_youth_served,
     CAST(s.complaints_delinquent_total * 1000.0 / NULLIF(s.population_10_17, 0) AS decimal(8,2)) AS complaint_rate,
     CAST(s.detention_admissions        * 1000.0 / NULLIF(s.population_10_17, 0) AS decimal(8,2)) AS detention_rate,
-    CAST(s.ydc_commitments             * 1000.0 / NULLIF(s.population_10_17, 0) AS decimal(8,3)) AS ydc_rate
+    CAST(s.ydc_commitments             * 1000.0 / NULLIF(s.population_10_17, 0) AS decimal(8,3)) AS ydc_rate,
+    CAST(s.complaints_violent            * 100.0 / NULLIF(s.complaints_delinquent_total, 0)  AS decimal(5,2) ) AS violent_share
 FROM county_stats AS s
 JOIN counties AS c ON c.county_name = s.county_name;
 GO
