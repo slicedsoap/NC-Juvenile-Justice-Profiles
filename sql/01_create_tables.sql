@@ -1,7 +1,7 @@
 -- =============================================================
 -- 01_create_tables.sql
 -- Creates the database and its two tables.
--- Safe to run again: it drops and recreates the tables.
+-- drops and recreates the tables.
 -- =============================================================
 
 IF DB_ID('NCYouthJustice') IS NULL
@@ -11,7 +11,7 @@ GO
 USE NCYouthJustice;
 GO
 
--- Drop in reverse order of the foreign key (child table first).
+-- Drop in reverse order of foreign key (child table first).
 DROP VIEW  IF EXISTS state_totals;
 DROP VIEW  IF EXISTS county_stats_with_rates;
 DROP TABLE IF EXISTS county_stats;
@@ -25,7 +25,7 @@ CREATE TABLE counties (
     judicial_district  varchar(5)  NOT NULL
 );
 
--- One row per county per year.
+-- One row per county per year. composite primary key makes sure each key is unique.
 CREATE TABLE county_stats (
     county_name                 varchar(30) NOT NULL REFERENCES counties (county_name),
     year                        smallint    NOT NULL,

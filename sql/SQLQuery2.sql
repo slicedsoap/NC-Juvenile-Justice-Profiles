@@ -20,3 +20,5 @@ SELECT county_name, year,
 CAST(complaints_violent * 100.0 / NULLIF(complaints_delinquent_total, 0)  AS decimal(5,2) ) AS 'violent_share'
 From county_stats
 WHERE county_name = 'Wake';
+
+SELECT * FROM county_stats_with_rates WHERE county_name = 'Wake';

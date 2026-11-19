@@ -1,7 +1,7 @@
 -- =============================================================
 -- 02_insert_data.sql
 -- Loads 100 counties and 600 county-year rows (2020-2025).
--- Generated from data/county_stats.csv. Run 01_create_tables.sql first.
+-- Generated from data/county_stats.csv.
 -- =============================================================
 
 USE NCYouthJustice;
